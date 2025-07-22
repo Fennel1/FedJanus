@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}错误 - 联邦学习结果可视化{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    发生错误
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <h6>错误信息：</h6>
+                    <p class="mb-0">{{ error_message }}</p>
+                </div>
+                
+                <div class="mt-3">
+                    <h6>可能的解决方案：</h6>
+                    <ul>
+                        <li>确保上传的文件是有效的JSON格式</li>
+                        <li>检查文件是否包含必要的实验数据结构</li>
+                        <li>确保文件大小不超过16MB</li>
+                        <li>检查文件权限和存储空间</li>
+                    </ul>
+                </div>
+                
+                <div class="mt-4">
+                    <a href="{{ url_for('index') }}" class="btn btn-primary">
+                        <i class="bi bi-arrow-left"></i>
+                        返回首页
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

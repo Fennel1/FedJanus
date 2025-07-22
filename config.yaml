@@ -1,0 +1,49 @@
+dataset:
+  name: "CIFAR-10"  # CIFAR-10, CIFAR-100, MNIST, Fashion-MNIST
+  data_dir: "./datasets"
+  distribution: "non_iid"  # iid, non_iid
+  alpha: 0.5  # Dirichlet分布参数
+
+model:
+  name: "CNN"  # LeNet, CNN, ResNet
+  input_shape: [32, 32, 3]
+  num_classes: 10
+
+federated:
+  num_clients: 10
+  num_rounds: 100
+  clients_per_round: 5
+  local_epochs: 5
+  learning_rate: 0.01
+  aggregation: "fedavg"  # fedavg, krum, median
+
+attack:
+  enable: true
+  malicious_clients: [0, 1]  # 攻击者客户端ID
+  attack_type: "label_flipping"  # label_flipping, gaussian, scaling, ipm
+  attack_params:
+    flip_ratio: 0.1
+    noise_scale: 0.1
+    scale_factor: 10
+
+defense:
+  enable: true
+  strategy: "krum"  # krum, multi_krum, median, coordinate_median, client_median, trimmed_mean
+  defense_params:
+    # Krum防御参数
+    num_malicious: 2
+    multi_krum: false
+    # 中位数防御参数
+    coordinate_wise: true  # 是否按坐标计算中位数
+    trimmed_mean: false    # 是否使用修剪均值
+    trim_ratio: 0.1        # 修剪比例（当使用修剪均值时）
+
+logging:
+  log_dir: "./logs"
+  save_results: true
+  results_dir: "./results"
+
+web:
+  enable: true
+  host: "localhost"
+  port: 5000

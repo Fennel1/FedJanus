@@ -1,0 +1,440 @@
+{% extends "base.html" %}
+
+{% block title %}可视化结果 - {{ filename }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>训练结果可视化</h1>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i>
+                返回首页
+            </a>
+        </div>
+
+        <!-- 实验信息 -->
+        <div class="file-info">
+            <h5>实验信息</h5>
+            <div class="row">
+                <div class="col-md-3">
+                    <strong>文件名:</strong> {{ filename }}
+                </div>
+                <div class="col-md-3">
+                    <strong>数据集:</strong> {{ experiment_info.get('dataset', 'Unknown') }}
+                </div>
+                <div class="col-md-3">
+                    <strong>模型:</strong> {{ experiment_info.get('model', 'Unknown') }}
+                </div>
+                <div class="col-md-3">
+                    <strong>客户端数量:</strong> {{ experiment_info.get('num_clients', 'Unknown') }}
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-md-3">
+                    <strong>训练轮次:</strong> {{ experiment_info.get('num_rounds', 'Unknown') }}
+                </div>
+                <div class="col-md-3">
+                    <strong>攻击类型:</strong> {{ experiment_info.get('attack_type', 'None') }}
+                </div>
+                <div class="col-md-3">
+                    <strong>防御策略:</strong> {{ experiment_info.get('defense_strategy', 'None') }}
+                </div>
+                <div class="col-md-3">
+                    <strong>聚合方法:</strong> {{ experiment_info.get('aggregation', 'FedAvg') }}
+                </div>
+            </div>
+        </div>
+
+        <!-- 图表区域 -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">全局损失值变化</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="lossChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">全局准确率变化</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="accuracyChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 客户端结果对比 -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">客户端训练结果对比</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="chart-container">
+                                    <canvas id="clientLossChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="chart-container">
+                                    <canvas id="clientAccuracyChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据统计 -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">训练统计信息</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="statisticsTable">
+                            <p class="text-muted">正在加载统计信息...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 全局变量存储图表实例
+let lossChart, accuracyChart, clientLossChart, clientAccuracyChart;
+
+// 页面加载完成后获取数据并绘制图表
+document.addEventListener('DOMContentLoaded', function() {
+    fetchDataAndDrawCharts();
+});
+
+async function fetchDataAndDrawCharts() {
+    try {
+        const response = await fetch(`/api/results/{{ filename }}`);
+        const data = await response.json();
+        
+        if (data.error) {
+            showError(data.error);
+            return;
+        }
+        
+        // 绘制全局结果图表
+        drawGlobalCharts(data);
+        
+        // 绘制客户端对比图表
+        drawClientCharts(data);
+        
+        // 显示统计信息
+        showStatistics(data);
+        
+    } catch (error) {
+        showError('数据加载失败: ' + error.message);
+    }
+}
+
+function drawGlobalCharts(data) {
+    const globalResults = data.global_results || {};
+    const rounds = globalResults.rounds || [];
+    const globalLoss = globalResults.global_loss || [];
+    const globalAccuracy = globalResults.global_accuracy || [];
+    
+    // 全局损失图表
+    const lossCtx = document.getElementById('lossChart').getContext('2d');
+    lossChart = new Chart(lossCtx, {
+        type: 'line',
+        data: {
+            labels: rounds,
+            datasets: [{
+                label: '全局损失',
+                data: globalLoss,
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: '损失值'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: '训练轮次'
+                    }
+                }
+            }
+        }
+    });
+    
+    // 全局准确率图表
+    const accuracyCtx = document.getElementById('accuracyChart').getContext('2d');
+    accuracyChart = new Chart(accuracyCtx, {
+        type: 'line',
+        data: {
+            labels: rounds,
+            datasets: [{
+                label: '全局准确率',
+                data: globalAccuracy,
+                borderColor: 'rgb(54, 162, 235)',
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 1,
+                    title: {
+                        display: true,
+                        text: '准确率'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: '训练轮次'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function drawClientCharts(data) {
+    const clientResults = data.client_results || {};
+    const rounds = data.global_results?.rounds || [];
+    
+    // 准备客户端数据
+    const clientDatasets = [];
+    const colors = [
+        'rgb(255, 99, 132)', 'rgb(54, 162, 235)', 'rgb(255, 205, 86)',
+        'rgb(75, 192, 192)', 'rgb(153, 102, 255)', 'rgb(255, 159, 64)',
+        'rgb(199, 199, 199)', 'rgb(83, 102, 147)', 'rgb(255, 99, 255)',
+        'rgb(99, 255, 132)'
+    ];
+    
+    let colorIndex = 0;
+    for (const [clientId, clientData] of Object.entries(clientResults)) {
+        const color = colors[colorIndex % colors.length];
+        clientDatasets.push({
+            label: `客户端 ${clientId}`,
+            data: clientData.loss || [],
+            borderColor: color,
+            backgroundColor: color.replace('rgb', 'rgba').replace(')', ', 0.2)'),
+            tension: 0.1
+        });
+        colorIndex++;
+    }
+    
+    // 客户端损失对比图表
+    const clientLossCtx = document.getElementById('clientLossChart').getContext('2d');
+    clientLossChart = new Chart(clientLossCtx, {
+        type: 'line',
+        data: {
+            labels: rounds,
+            datasets: clientDatasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: '损失值'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: '训练轮次'
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: '各客户端损失值变化'
+                }
+            }
+        }
+    });
+    
+    // 准备客户端准确率数据
+    const clientAccuracyDatasets = [];
+    colorIndex = 0;
+    for (const [clientId, clientData] of Object.entries(clientResults)) {
+        const color = colors[colorIndex % colors.length];
+        clientAccuracyDatasets.push({
+            label: `客户端 ${clientId}`,
+            data: clientData.accuracy || [],
+            borderColor: color,
+            backgroundColor: color.replace('rgb', 'rgba').replace(')', ', 0.2)'),
+            tension: 0.1
+        });
+        colorIndex++;
+    }
+    
+    // 客户端准确率对比图表
+    const clientAccuracyCtx = document.getElementById('clientAccuracyChart').getContext('2d');
+    clientAccuracyChart = new Chart(clientAccuracyCtx, {
+        type: 'line',
+        data: {
+            labels: rounds,
+            datasets: clientAccuracyDatasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 1,
+                    title: {
+                        display: true,
+                        text: '准确率'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: '训练轮次'
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: '各客户端准确率变化'
+                }
+            }
+        }
+    });
+}
+
+function showStatistics(data) {
+    const globalResults = data.global_results || {};
+    const clientResults = data.client_results || {};
+    const experimentInfo = data.experiment_info || {};
+    
+    // 计算统计信息
+    const finalGlobalLoss = globalResults.global_loss?.slice(-1)[0] || 'N/A';
+    const finalGlobalAccuracy = globalResults.global_accuracy?.slice(-1)[0] || 'N/A';
+    const totalRounds = globalResults.rounds?.length || 0;
+    const numClients = Object.keys(clientResults).length;
+    
+    // 计算客户端平均性能
+    let avgClientLoss = 'N/A';
+    let avgClientAccuracy = 'N/A';
+    
+    if (numClients > 0) {
+        let totalLoss = 0;
+        let totalAccuracy = 0;
+        let validClients = 0;
+        
+        for (const [clientId, clientData] of Object.entries(clientResults)) {
+            const finalLoss = clientData.loss?.slice(-1)[0];
+            const finalAccuracy = clientData.accuracy?.slice(-1)[0];
+            
+            if (finalLoss !== undefined && finalAccuracy !== undefined) {
+                totalLoss += finalLoss;
+                totalAccuracy += finalAccuracy;
+                validClients++;
+            }
+        }
+        
+        if (validClients > 0) {
+            avgClientLoss = (totalLoss / validClients).toFixed(4);
+            avgClientAccuracy = (totalAccuracy / validClients).toFixed(4);
+        }
+    }
+    
+    const statisticsHtml = `
+        <div class="row">
+            <div class="col-md-3">
+                <div class="text-center">
+                    <h4 class="text-primary">${totalRounds}</h4>
+                    <p class="text-muted">总训练轮次</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <h4 class="text-success">${typeof finalGlobalAccuracy === 'number' ? (finalGlobalAccuracy * 100).toFixed(2) + '%' : finalGlobalAccuracy}</h4>
+                    <p class="text-muted">最终全局准确率</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <h4 class="text-warning">${typeof finalGlobalLoss === 'number' ? finalGlobalLoss.toFixed(4) : finalGlobalLoss}</h4>
+                    <p class="text-muted">最终全局损失</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <h4 class="text-info">${numClients}</h4>
+                    <p class="text-muted">参与客户端数量</p>
+                </div>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="text-center">
+                    <h5 class="text-secondary">${typeof avgClientAccuracy === 'string' ? avgClientAccuracy : (avgClientAccuracy * 100).toFixed(2) + '%'}</h5>
+                    <p class="text-muted">客户端平均准确率</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="text-center">
+                    <h5 class="text-secondary">${avgClientLoss}</h5>
+                    <p class="text-muted">客户端平均损失</p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('statisticsTable').innerHTML = statisticsHtml;
+}
+
+function showError(message) {
+    const errorHtml = `
+        <div class="alert alert-danger">
+            <h6>数据加载错误</h6>
+            <p class="mb-0">${message}</p>
+        </div>
+    `;
+    document.body.innerHTML = errorHtml;
+}
+</script>
+{% endblock %}

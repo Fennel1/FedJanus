@@ -1,0 +1,24 @@
+# 联邦学习投毒攻击防御训练框架依赖
+# Federated Learning Poisoning Attack Defense Training Framework Dependencies
+
+# 基础依赖
+PyYAML>=6.0
+numpy>=1.21.0
+
+# 深度学习框架 (将在后续任务中使用)
+torch>=1.9.0
+torchvision>=0.10.0
+
+# Web框架 (将在后续任务中使用)
+Flask>=2.0.0
+
+# 数据可视化 (将在后续任务中使用)
+matplotlib>=3.5.0
+plotly>=5.0.0
+
+# 科学计算 (将在后续任务中使用)
+scipy>=1.7.0
+scikit-learn>=1.0.0
+
+# 其他工具
+pathlib2>=2.3.0

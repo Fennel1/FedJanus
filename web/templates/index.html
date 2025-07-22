@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}首页 - 联邦学习结果可视化{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">联邦学习训练结果可视化</h1>
+        
+        <!-- 文件上传区域 -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">上传结果文件</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+                    <div class="upload-area">
+                        <i class="bi bi-cloud-upload" style="font-size: 3rem; color: #6c757d;"></i>
+                        <h5>选择或拖拽JSON结果文件</h5>
+                        <p class="text-muted">支持联邦学习训练结果的JSON格式文件</p>
+                        <input type="file" class="form-control" name="file" accept=".json" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">上传文件</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 现有结果文件列表 -->
+        {% if result_files %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">现有结果文件</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>文件名</th>
+                                <th>数据集</th>
+                                <th>模型</th>
+                                <th>客户端数量</th>
+                                <th>攻击类型</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for file in result_files %}
+                            <tr>
+                                <td>{{ file.filename }}</td>
+                                <td>{{ file.dataset }}</td>
+                                <td>{{ file.model }}</td>
+                                <td>{{ file.num_clients }}</td>
+                                <td>{{ file.attack_type }}</td>
+                                <td>
+                                    <a href="{{ url_for('visualize', filename=file.filename) }}" 
+                                       class="btn btn-sm btn-primary">查看可视化</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <h5>暂无结果文件</h5>
+            <p class="mb-0">请上传联邦学习训练结果的JSON文件以开始可视化分析。</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

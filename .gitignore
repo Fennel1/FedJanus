@@ -1,0 +1,90 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project-specific directories and files based on current structure
+
+# Cache directories
+__pycache__/
+*/__pycache__/
+attacks/__pycache__/
+data/__pycache__/
+defenses/__pycache__/
+federated/__pycache__/
+models/__pycache__/
+tests/__pycache__/
+utils/__pycache__/
+web/__pycache__/
+.kiro/
+
+# Testing
+.pytest_cache/
+.coverage
+*.cover
+htmlcov/
+test_*.py
+tests/
+
+# Logs - all log files in logs directory
+# logs/
+*.log
+
+# Results and outputs
+# results/
+*.json
+
+# Datasets and data files
+datasets/
+client_data/
+*.tar.gz
+*.pkl
+*.pickle
+
+# Model files
+*.pth
+*.pt
+*.h5
+*.model
+*.ckpt
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Configuration files (keep template, ignore local configs)
+config_local.yaml
+.env.local
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints/
+
+# Distribution
+build/
+dist/
+*.egg-info/
+
+docs/
+examples/
+
